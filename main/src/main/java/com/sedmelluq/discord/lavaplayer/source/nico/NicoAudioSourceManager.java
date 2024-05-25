@@ -28,6 +28,7 @@ import org.jsoup.parser.Parser;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -164,12 +165,15 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
     }
 
     void logIn(String email, String password) {
+        //loggedIn.set(true);
         synchronized (loggedIn) {
             if (loggedIn.get()) {
                 return;
             }
 
-            HttpPost loginRequest = new HttpPost("https://account.nicovideo.jp/login/redirector".trim());
+            String url = "https://account.nicovideo.jp/login/redirector".trim();
+            URI uri = URI.create(url);
+            HttpPost loginRequest = new HttpPost(uri);
 
             loginRequest.setEntity(new UrlEncodedFormEntity(Arrays.asList(
                 new BasicNameValuePair("mail_tel", email),
