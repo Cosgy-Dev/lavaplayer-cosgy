@@ -169,7 +169,7 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
                 return;
             }
 
-            HttpPost loginRequest = new HttpPost("https://account.nicovideo.jp/login/redirector");
+            HttpPost loginRequest = new HttpPost("https://account.nicovideo.jp/login/redirector".trim());
 
             loginRequest.setEntity(new UrlEncodedFormEntity(Arrays.asList(
                 new BasicNameValuePair("mail_tel", email),
