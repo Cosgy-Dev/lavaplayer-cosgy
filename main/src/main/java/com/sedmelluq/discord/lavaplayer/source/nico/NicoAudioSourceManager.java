@@ -169,8 +169,7 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
                 return;
             }
 
-            HttpPost loginRequest = new HttpPost("\n" +
-                "https://account.nicovideo.jp/login/redirector");
+            HttpPost loginRequest = new HttpPost("https://account.nicovideo.jp/login/redirector");
 
             loginRequest.setEntity(new UrlEncodedFormEntity(Arrays.asList(
                 new BasicNameValuePair("mail_tel", email),
@@ -187,7 +186,7 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
 
                     Header location = response.getFirstHeader("Location");
 
-                    if (location == null || location.getValue().contains("message=")) {
+                    if (location == null || location.getValue().contains("message=cant_login")) {
                         throw new FriendlyException("Login details for NicoNico are invalid.", COMMON, null);
                     }
 
