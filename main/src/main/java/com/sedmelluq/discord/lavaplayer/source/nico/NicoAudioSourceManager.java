@@ -165,7 +165,6 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
     }
 
     void logIn(String email, String password) {
-        //loggedIn.set(true);
         synchronized (loggedIn) {
             if (loggedIn.get()) {
                 return;
