@@ -1,9 +1,11 @@
 package com.sedmelluq.discord.lavaplayer.source.nico;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
+import com.sedmelluq.discord.lavaplayer.container.playlists.ExtendedM3uParser;
 import com.sedmelluq.discord.lavaplayer.container.playlists.HlsStreamTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
@@ -14,6 +16,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.InternalAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -28,8 +31,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 /**
  * Audio track that handles processing NicoNico tracks.
@@ -61,17 +68,40 @@ public class NicoAudioTrack extends DelegatedAudioTrack {
             String playbackUrl = loadPlaybackUrl(httpInterface);
 
             log.debug("Starting NicoNico track from URL: {}", playbackUrl);
+            processDelegate(new HlsStreamTrack(
+                trackInfo,
+                extractHlsAudioPlaylistUrl(httpInterface, playbackUrl),
+                sourceManager.getHttpInterfaceManager(),
+                true
+            ), localExecutor);
+        }
+    }
 
-            try (PersistentHttpStream inputStream = new PersistentHttpStream(httpInterface, new URI(trackInfo.identifier), Units.CONTENT_LENGTH_UNKNOWN)) {
-                //processDelegate(new MpegAudioTrack(trackInfo, inputStream), localExecutor);
-                processDelegate(new HlsStreamTrack(
-                    trackInfo,
-                    playbackUrl,
-                    sourceManager.getHttpInterfaceManager(),
-                    true
-                ), localExecutor);
+    private String extractHlsAudioPlaylistUrl(HttpInterface httpInterface, String videoPlaylistUrl) throws IOException {
+        String url = null;
+        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(videoPlaylistUrl))) {
+            int statusCode = response.getStatusLine().getStatusCode();
+
+            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
+                throw new FriendlyException("Server responded with an error.", SUSPICIOUS,
+                    new IllegalStateException("Response code for track access info is " + statusCode));
+            }
+
+            String bodyString = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            for (String rawLine : bodyString.split("\n")) {
+                ExtendedM3uParser.Line line = ExtendedM3uParser.parseLine(rawLine);
+                if (Objects.equals(line.directiveName, "EXT-X-MEDIA")
+                    && Objects.equals(line.directiveArguments.get("TYPE"), "AUDIO")) {
+                    url = line.directiveArguments.get("URI");
+                    break;
+                }
             }
         }
+
+        if (url == null) throw new FriendlyException("Failed to find audio playlist URL.", SUSPICIOUS,
+            new IllegalStateException("Valid audio directive was not found"));
+
+        return url;
     }
 
     private JsonBrowser loadVideoApi(HttpInterface httpInterface) throws IOException {
