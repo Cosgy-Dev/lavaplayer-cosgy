@@ -110,11 +110,11 @@ public class NicoAudioTrack extends DelegatedAudioTrack {
             }
         }
 
-        String jwt = videoJson.get("media").get("domand").get("accessRightKey").text();
-
         //JSONObject watchData = processJSON(videoJson.get("media").get("delivery").get("movie").get("session"));
         String video = videoJson.get("media").get("domand").get("videos").index(0).get("id").text();
         String audio = videoJson.get("media").get("domand").get("audios").index(0).get("id").text();
+
+        String jwt = videoJson.get("media").get("domand").get("accessRightKey").text();
 
         HttpPost request = new HttpPost("https://nvapi.nicovideo.jp/v1/watch/" + getIdentifier() + "/access-rights/hls?actionTrackId=" + actionTrackId);
         request.addHeader("X-Access-Right-Key", jwt);
