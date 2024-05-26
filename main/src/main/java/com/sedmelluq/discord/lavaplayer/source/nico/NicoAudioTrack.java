@@ -64,8 +64,12 @@ public class NicoAudioTrack extends DelegatedAudioTrack {
 
             try (PersistentHttpStream inputStream = new PersistentHttpStream(httpInterface, new URI(trackInfo.identifier), Units.CONTENT_LENGTH_UNKNOWN)) {
                 //processDelegate(new MpegAudioTrack(trackInfo, inputStream), localExecutor);
-                processDelegate(new MpegAudioTrack(trackInfo, inputStream), localExecutor);
-
+                processDelegate(new HlsStreamTrack(
+                    trackInfo,
+                    playbackUrl,
+                    sourceManager.getHttpInterfaceManager(),
+                    true
+                ), localExecutor);
             }
         }
     }

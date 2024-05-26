@@ -55,6 +55,10 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
         this(null, null);
     }
 
+    public HttpInterfaceManager getHttpInterfaceManager() {
+        return httpInterfaceManager;
+    }
+
     /**
      * @param email    Site account email
      * @param password Site account password
