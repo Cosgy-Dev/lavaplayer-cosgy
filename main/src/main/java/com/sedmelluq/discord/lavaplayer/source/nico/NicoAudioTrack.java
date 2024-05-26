@@ -121,6 +121,12 @@ public class NicoAudioTrack extends DelegatedAudioTrack {
         request.addHeader("X-Frontend-Version", "0");
         request.addHeader("X-Frontend-Id", "6");
         request.addHeader("X-Request-With", "https://www.nicovideo.jp");
+        request.addHeader("Sec-Fetch-Dest", "empty");
+        request.addHeader("Sec-Fetch-Mode", "cors");
+        request.addHeader("Sec-Fetch-Site", "same-site");
+        request.addHeader("Origin", "https://www.nicovideo.jp");
+        request.addHeader("Referer", "https://www.nicovideo.jp/");
+        request.addHeader("X-Niconico-Language", "ja-jp");
         request.setEntity(new StringEntity("{\"outputs\": [[\"" + video + "\", \""+ audio +"\"]]}"));
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
