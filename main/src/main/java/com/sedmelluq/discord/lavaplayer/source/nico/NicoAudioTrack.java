@@ -1,14 +1,18 @@
 package com.sedmelluq.discord.lavaplayer.source.nico;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
+import com.sedmelluq.discord.lavaplayer.container.playlists.HlsStreamTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
+import com.sedmelluq.discord.lavaplayer.track.InternalAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -58,15 +62,10 @@ public class NicoAudioTrack extends DelegatedAudioTrack {
 
             log.debug("Starting NicoNico track from URL: {}", playbackUrl);
 
-            try (HeartbeatingHttpStream stream = new HeartbeatingHttpStream(
-                httpInterface,
-                new URI(playbackUrl),
-                null,
-                heartbeatUrl,
-                heartbeatIntervalMs,
-                initialHeartbeatPayload
-            )) {
-                processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
+            try (PersistentHttpStream inputStream = new PersistentHttpStream(httpInterface, new URI(trackInfo.identifier), Units.CONTENT_LENGTH_UNKNOWN)) {
+                //processDelegate(new MpegAudioTrack(trackInfo, inputStream), localExecutor);
+                processDelegate(new MpegAudioTrack(trackInfo, inputStream), localExecutor);
+
             }
         }
     }
