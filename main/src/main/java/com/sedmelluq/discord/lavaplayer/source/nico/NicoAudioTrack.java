@@ -112,7 +112,7 @@ public class NicoAudioTrack extends DelegatedAudioTrack {
 
         String jwt = processJSON(videoJson.get("media").get("domand")).getString("accessRightKey");
 
-        JSONObject watchData = processJSON(videoJson.get("media").get("delivery").get("movie").get("session"));
+        //JSONObject watchData = processJSON(videoJson.get("media").get("delivery").get("movie").get("session"));
         String video = processJSON(videoJson.get("media").get("domand").get("videos").index(0)).getString("id");
         String audio = processJSON(videoJson.get("media").get("domand").get("audios").index(0)).getString("id");
 
