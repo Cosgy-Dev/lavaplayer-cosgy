@@ -72,7 +72,7 @@ public class NicoAudioTrack extends DelegatedAudioTrack {
     }
 
     private JsonBrowser loadVideoApi(HttpInterface httpInterface) throws IOException {
-        String apiUrl = "https://www.nicovideo.jp/api/watch/v3_guest/" + getIdentifier() + "?_frontendId=6&_frontendVersion=0&actionTrackId=" + actionTrackId + "&i18nLanguage=en-us";
+        String apiUrl = "https://www.nicovideo.jp/api/watch/v3_guest/" + getIdentifier() + "?_frontendId=6&_frontendVersion=0&actionTrackId=" + actionTrackId + "&i18nLanguage=ja-jp";
 
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(apiUrl))) {
             HttpClientTools.assertSuccessWithContent(response, "api response");
@@ -110,14 +110,18 @@ public class NicoAudioTrack extends DelegatedAudioTrack {
             }
         }
 
-        JSONObject watchData = processJSON(videoJson.get("media").get("delivery").get("movie").get("session"));
+        String jwt = processJSON(videoJson.get("media").get("domand")).getString("accessRightKey");
 
-        HttpPost request = new HttpPost("https://api.dmc.nico/api/sessions?_format=json");
-        request.addHeader("Host", "api.dmc.nico");
-        request.addHeader("Connection", "keep-alive");
-        request.addHeader("Content-Type", "application/json");
-        request.addHeader("Origin", "https://www.nicovideo.jp");
-        request.setEntity(new StringEntity(watchData.toString()));
+        JSONObject watchData = processJSON(videoJson.get("media").get("delivery").get("movie").get("session"));
+        String video = processJSON(videoJson.get("media").get("domand").get("videos").index(0)).getString("id");
+        String audio = processJSON(videoJson.get("media").get("domand").get("audios").index(0)).getString("id");
+
+        HttpPost request = new HttpPost("https://nvapi.nicovideo.jp/v1/watch/" + getIdentifier() + "/access-rights/hls?actionTrackId=" + actionTrackId);
+        request.addHeader("X-Access-Right-Key", jwt);
+        request.addHeader("X-Frontend-Version", "0");
+        request.addHeader("X-Frontend-Id", "6");
+        request.addHeader("X-Request-With", "https://www.nicovideo.jp");
+        request.setEntity(new StringEntity("{\"outputs\": [[\"" + video + "\", \""+ audio +"\"]]}"));
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
@@ -127,13 +131,14 @@ public class NicoAudioTrack extends DelegatedAudioTrack {
             }
 
             JsonBrowser info = JsonBrowser.parse(response.getEntity().getContent()).get("data");
-            JsonBrowser session = info.get("session");
+            /*JsonBrowser session = info.get("session");
 
             heartbeatUrl = "https://api.dmc.nico/api/sessions/" + session.get("id").text() + "?_format=json&_method=PUT";
             heartbeatIntervalMs = session.get("keep_method").get("heartbeat").get("lifetime").asInt(120000) - 5000;
             initialHeartbeatPayload = info.format();
+             */
 
-            return session.get("content_uri").text();
+            return info.get("contentUri").text();
         }
     }
 
